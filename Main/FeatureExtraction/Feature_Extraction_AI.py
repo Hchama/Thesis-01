@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -35,7 +36,22 @@ def extract_gabor_features(image):
 
 # Combine color histogram and Gabor features
 def combine_features(color_histogram, gabor_features):
-    return np.concatenate((color_histogram, gabor_features.flatten()), axis=None)
+    features = np.concatenate((color_histogram, gabor_features.flatten()), axis=None)
+   # print ("combine values: ", features ) 
+    mean_features = np.mean(features)
+    std_features = np.std(features)
+
+    # Set threshold as a multiple of standard deviation above the mean
+    threshold = mean_features + 1 * std_features  # Choose appropriate value for k
+
+   # Compute mean and standard deviation of combined features
+    print ("mean ", mean_features)
+    print ("std ", std_features)
+    print ("threshold ", threshold)
+    print ("----------------------------------")
+    return features
+
+
 
 # Apply K-means clustering for spatial representation
 def apply_kmeans(features, num_clusters=5):
@@ -98,3 +114,30 @@ def convert_to_spike_trains(feature_vectors):
 # Convert Features to Spike Trains
 spike_trains = convert_to_spike_trains(all_feature_vectors)
 
+
+data = []
+
+for root, _, files in os.walk(folder_path):
+    for filename in files:
+        if filename.endswith('.jpg') or filename.endswith('.png'):
+            image_path = os.path.join(root, filename)
+            image = cv2.imread(image_path)
+            
+            # Extract features
+            color_histogram = extract_color_histogram(image)
+            gabor_features = extract_gabor_features(image)
+            
+            # Combine features
+            combined_features = combine_features(color_histogram, gabor_features)
+            
+            # Store image name and features
+            data.append([filename, *combined_features])
+
+columns = ['Image Name', *['Feature {}'.format(i) for i in range(len(data[0]) - 1)]]
+df = pd.DataFrame(data, columns=columns)
+
+# Save DataFrame to CSV
+csv_filename = 'Features_Data.csv'
+df.to_csv(csv_filename, index=False)
+
+print("CSV file saved successfully:", csv_filename)

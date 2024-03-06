@@ -9,3 +9,9 @@ Higher frequencies indicate that more pixels in the image have the corresponding
 while lower frequencies indicate less common colors or intensity values.
 
 
+Github commands
+
+git add --a
+git status
+git commit -m "message"
+git push
